@@ -5,6 +5,7 @@ interface ReaderControlsProps {
   enabled: boolean;
   settings: ReaderSettings;
   busy?: boolean;
+  compact?: boolean;
   available?: boolean;
   error?: string;
   onToggle(): void;
@@ -17,6 +18,7 @@ export function ReaderControls({
   enabled,
   settings,
   busy = false,
+  compact = false,
   available = true,
   error,
   onToggle,
@@ -24,41 +26,8 @@ export function ReaderControls({
   onStop,
   onRepeat,
 }: ReaderControlsProps) {
-  return (
-    <section className="reader-controls" aria-labelledby="controls-title" data-pagevoice-ignore>
-      <div className="controls-heading">
-        <div className="icon-tile">
-          <Volume2 size={23} aria-hidden="true" />
-        </div>
-        <div>
-          <h2 id="controls-title">Hover to hear</h2>
-          <p>You point. PageVoice reads.</p>
-        </div>
-      </div>
-      <button
-        className={`enable-button ${enabled ? 'is-enabled' : ''}`}
-        type="button"
-        aria-pressed={enabled}
-        onClick={onToggle}
-        disabled={busy || !available}
-      >
-        <Power size={19} aria-hidden="true" />
-        {busy ? 'Please wait…' : enabled ? 'Turn off reading' : 'Turn on reading'}
-      </button>
-      <p className="control-status" role="status">
-        {enabled ? 'On — move over text or a button to hear it.' : 'Off — nothing is being read.'}
-      </p>
-      {!available && (
-        <p className="error-note">
-          Open a regular website to use PageVoice. Browser settings and other protected pages cannot
-          be read.
-        </p>
-      )}
-      {error && (
-        <p className="error-note" role="alert">
-          {error}
-        </p>
-      )}
+  const preferences = (
+    <>
       <div className="settings-grid">
         <label htmlFor="reading-speed">
           Reading speed
@@ -117,6 +86,51 @@ export function ReaderControls({
       <p className="setting-help">
         Use Tab to hear controls. Turn this off if your screen reader already announces them.
       </p>
+    </>
+  );
+  return (
+    <section className="reader-controls" aria-labelledby="controls-title" data-pagevoice-ignore>
+      <div className="controls-heading">
+        <div className="icon-tile">
+          <Volume2 size={23} aria-hidden="true" />
+        </div>
+        <div>
+          <h2 id="controls-title">Hover to hear</h2>
+          <p>You point. PageVoice reads.</p>
+        </div>
+      </div>
+      <button
+        className={`enable-button ${enabled ? 'is-enabled' : ''}`}
+        type="button"
+        aria-pressed={enabled}
+        onClick={onToggle}
+        disabled={busy || !available}
+      >
+        <Power size={19} aria-hidden="true" />
+        {busy ? 'Please wait…' : enabled ? 'Turn off reading' : 'Turn on reading'}
+      </button>
+      <p className="control-status" role="status">
+        {enabled ? 'On — move over text or a button to hear it.' : 'Off — nothing is being read.'}
+      </p>
+      {!available && (
+        <p className="error-note">
+          Open a regular website to use PageVoice. Browser settings and other protected pages cannot
+          be read.
+        </p>
+      )}
+      {error && (
+        <p className="error-note" role="alert">
+          {error}
+        </p>
+      )}
+      {compact ? (
+        <details className="reading-preferences">
+          <summary>Reading preferences</summary>
+          {preferences}
+        </details>
+      ) : (
+        preferences
+      )}
       <div className="playback-buttons">
         <button type="button" onClick={onStop}>
           <Square size={15} aria-hidden="true" />

@@ -7,6 +7,7 @@ import {
 
 const stateKey = (tabId: number) => `enabled:${tabId}`;
 const errorKey = (tabId: number) => `error:${tabId}`;
+// Invalidate unfinished voice lookups whenever speech is replaced or stopped.
 let speechGeneration = 0;
 
 async function settings(): Promise<ReaderSettings> {

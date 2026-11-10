@@ -36,11 +36,11 @@ To test the installed extension on this sample, leave the preview's own reader *
 - **Hover:** pause over text or a control. Moving to another target replaces the current speech.
 - **Tab:** hear focused controls when **Also read keyboard focus** is enabled. Turn this off if your screen reader already announces focus.
 - **Stop / Escape:** cancel current and pending speech. Moving again can start another reading.
-- **Repeat last:** repeat the last hovered or focused item. The preview's initial welcome message is not saved for Repeat.
-- **Reading speed, text mode and hover delay:** personalise playback. Changes apply to later readings.
+- **Repeat last:** repeat the last hovered or focused item at the current speed. The preview can also repeat its initial welcome message.
+- **Reading preferences:** expand this section in the extension popup to change speed, text mode, hover delay or keyboard announcements. Preferences apply across enabled tabs; Repeat uses the current speed.
 - **Alt+Shift+Y:** open the extension popup. **Alt+Shift+S:** stop extension speech. Shortcut availability depends on browser/OS conflicts; inspect Chrome's Extensions keyboard shortcuts page if needed.
 
-If no local voice is found, PageVoice displays an error rather than selecting a remote voice. Install a local English speech voice in your operating system and retry. Audio and installed-extension behaviour still require manual checks.
+The preview briefly waits for local voices to finish loading. If no local voice is found, PageVoice displays an error rather than selecting a remote voice. Install a local English speech voice in your operating system and retry. The build has been loaded and exercised in Chrome, and audible button playback through Repeat has been confirmed. Further listening and accessibility checks remain outstanding.
 
 ## Project layout
 
@@ -96,3 +96,7 @@ Tests simulate pointer events and Chrome speech APIs. They do not prove audible 
 English text, ordinary DOM content and the top-level page are the initial scope. Canvas text, image OCR, embedded frames and shadow roots are not supported. Sentence reading can stop at inline markup boundaries. Poorly labelled controls may be announced as unlabelled; the extension does not invent a purpose. It implements a subset of accessible-name rules, not a full browser accessibility tree.
 
 Hovering relies on pointer positioning and is most directly useful to people who can locate a target. Keyboard support offers a complementary path, but full nonvisual navigation remains the job of a screen reader. User research is still needed.
+
+## Browser API references
+
+The extension uses Chrome’s [temporary active-tab access](https://developer.chrome.com/docs/extensions/develop/concepts/activeTab), [text-to-speech API](https://developer.chrome.com/docs/extensions/reference/api/tts) and [local/session storage](https://developer.chrome.com/docs/extensions/reference/api/storage). Keyboard shortcuts are configured through the [Commands API](https://developer.chrome.com/docs/extensions/reference/api/commands).

@@ -20,6 +20,7 @@ export function createHoverReader(root: Document, output: SpeechOutput, initial:
     pendingKind = undefined;
   };
   const selectTarget = (element: Element) => {
+    // Track the element as well as its words: two buttons may have the same label.
     const target = readingTarget(element);
     if (activeTarget !== target) {
       activeTarget = target;
@@ -46,6 +47,7 @@ export function createHoverReader(root: Document, output: SpeechOutput, initial:
   };
   const pointerMove = (event: PointerEvent) => {
     if (disposed || !(event.target instanceof Element) || event.pointerType === 'touch') return;
+    // Restart the delay while the pointer moves; only read after it settles.
     cancelPending();
     const target = selectTarget(event.target);
     const x = event.clientX;

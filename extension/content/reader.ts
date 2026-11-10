@@ -2,6 +2,7 @@ import { createHoverReader } from '../../src/lib/hoverReader.js';
 import { normaliseSettings, type ReaderSettings } from '../../shared/settings.js';
 
 const scope = globalThis as typeof globalThis & { __pageVoiceInstalled?: boolean };
+// Re-enabling a tab must not attach a second set of message listeners.
 if (!scope.__pageVoiceInstalled) {
   scope.__pageVoiceInstalled = true;
   let reader: ReturnType<typeof createHoverReader> | undefined;

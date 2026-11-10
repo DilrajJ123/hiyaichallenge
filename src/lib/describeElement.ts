@@ -141,6 +141,7 @@ export function describeAtPoint(
   if (target instanceof HTMLImageElement)
     return target.alt ? `${target.alt.slice(0, 300)}. Image.` : '';
   const document = target.ownerDocument as CaretDocument;
+  // Locate text under the pointer without selecting or changing the page.
   const caret = document.caretPositionFromPoint?.(x, y);
   const range = caret ? null : document.caretRangeFromPoint?.(x, y);
   const node = caret?.offsetNode || range?.startContainer;

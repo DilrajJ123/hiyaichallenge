@@ -1,0 +1,20 @@
+{
+  "manifest_version": 3,
+  "name": "PageVoice — Hover to hear",
+  "description": "Hear buttons, links and text as you hover or move keyboard focus. No AI account required.",
+  "version": "0.1.0",
+  "minimum_chrome_version": "116",
+  "permissions": ["activeTab", "scripting", "tts", "storage"],
+  "action": { "default_title": "PageVoice — Hover to hear", "default_popup": "index.html" },
+  "background": { "service_worker": "background.js" },
+  "commands": {
+    "_execute_action": { "suggested_key": { "default": "Alt+Shift+Y" } },
+    "stop-reading": {
+      "suggested_key": { "default": "Alt+Shift+S" },
+      "description": "Stop PageVoice speech"
+    }
+  },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'none'; connect-src 'none'"
+  }
+}

@@ -4,7 +4,7 @@ const allHistory = process.argv.includes('--history');
 const git = (...args) =>
   execFileSync('git', args, { encoding: 'utf8', maxBuffer: 20 * 1024 * 1024 });
 const sensitiveFile =
-  /(^|\/)(\.env(?:\..*)?|id_rsa|id_ed25519|credentials(?:\.json)?|.*\.(?:pem|p12|pfx))$/i;
+  /(^|\/)(\.env(?:\..*)?|id_rsa|id_ed25519|credentials(?:\.json)?|.*\.(?:pem|key|p12|pfx))$/i;
 const patterns = [
   /sk-(?:proj-)?[A-Za-z0-9_-]{20,}/,
   /(?:gh[pousr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,})/,

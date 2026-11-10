@@ -2,6 +2,11 @@ node_modules/
 dist/
 dist-extension/
 .env*
+*.pem
+*.key
+*.p12
+*.pfx
+credentials.json
 .DS_Store
 coverage/
 test-results/

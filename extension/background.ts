@@ -18,11 +18,12 @@ async function settings(): Promise<ReaderSettings> {
 async function state(tabId: number): Promise<ExtensionState> {
   const tab = await chrome.tabs.get(tabId);
   const session = await chrome.storage.session.get([stateKey(tabId), errorKey(tabId)]);
+  const storedError = session[errorKey(tabId)];
   return {
     enabled: session[stateKey(tabId)] === true,
     available: /^https?:\/\//.test(tab.url || ''),
     settings: await settings(),
-    error: session[errorKey(tabId)],
+    error: typeof storedError === 'string' ? storedError : undefined,
   };
 }
 

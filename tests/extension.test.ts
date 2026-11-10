@@ -68,6 +68,19 @@ describe('Chrome speech adapter (simulated Chrome APIs)', () => {
     expect(speak.mock.calls[0][0]).toBe('Search. Button.');
     expect(speak.mock.calls[0][1].voiceName).toBe('Local English');
   });
+  it('keeps a local extension voice tied to its engine', async () => {
+    voices[0].extensionId = 'local-speech-engine';
+    send('Search. Button.');
+    await vi.waitFor(() => expect(speak).toHaveBeenCalledTimes(1));
+    expect(speak.mock.calls[0][1].extensionId).toBe('local-speech-engine');
+  });
+  it('clears an earlier error when a local voice becomes available', async () => {
+    session['error:1'] = 'No local speech voice is available.';
+    send('Search. Button.');
+    await vi.waitFor(() => expect(speak).toHaveBeenCalledTimes(1));
+    expect(session['error:1']).toBe('');
+    expect(chrome.action.setBadgeText).toHaveBeenCalledWith({ tabId: 1, text: 'ON' });
+  });
   it('refuses remote-only voices instead of uploading page text', async () => {
     voices = [{ voiceName: 'Cloud voice', lang: 'en-GB', remote: true }];
     send('Private page text');
@@ -99,5 +112,32 @@ describe('Chrome speech adapter (simulated Chrome APIs)', () => {
     resolveVoices!(voices);
     await Promise.resolve();
     expect(speak).not.toHaveBeenCalled();
+  });
+  it('forwards popup Stop to cancel the pending page timer', async () => {
+    listener({ type: 'STOP' }, { id: 'test-extension' }, () => {});
+    await vi.waitFor(() =>
+      expect(chrome.tabs.sendMessage).toHaveBeenCalledWith(1, { type: 'STOP_READER' }),
+    );
+    expect(stop).toHaveBeenCalled();
+  });
+  it('does not bounce a page Stop message back to the page', () => {
+    listener({ type: 'STOP' }, { id: 'test-extension', tab: tab as chrome.tabs.Tab }, () => {});
+    expect(chrome.tabs.sendMessage).not.toHaveBeenCalled();
+    expect(stop).toHaveBeenCalledOnce();
+  });
+  it('updates settings without replacing the reader and losing Repeat', async () => {
+    const result = await new Promise((resolve) => {
+      listener(
+        { type: 'SET_SETTINGS', settings: { rate: 1.5 } },
+        { id: 'test-extension' },
+        resolve,
+      );
+    });
+    expect(result).toHaveProperty('enabled', true);
+    expect(chrome.tabs.sendMessage).toHaveBeenCalledWith(1, {
+      type: 'UPDATE_SETTINGS',
+      settings: { rate: 1.5, delay: 350, textMode: 'sentence', readOnFocus: true },
+    });
+    expect(chrome.scripting.executeScript).not.toHaveBeenCalled();
   });
 });

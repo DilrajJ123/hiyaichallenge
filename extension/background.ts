@@ -32,6 +32,13 @@ function stopSpeech() {
   chrome.tts.stop();
 }
 
+async function stopActiveReader() {
+  stopSpeech();
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  if (tab?.id !== undefined)
+    await chrome.tabs.sendMessage(tab.id, { type: 'STOP_READER' }).catch(() => {});
+}
+
 async function setEnabled(tabId: number, enabled: boolean, preferences: ReaderSettings) {
   stopSpeech();
   if (enabled) {
@@ -79,6 +86,9 @@ async function speak(tabId: number, text: string) {
     await chrome.action.setBadgeText({ tabId, text: '!' });
     return;
   }
+  await chrome.storage.session.set({ [errorKey(tabId)]: '' });
+  await chrome.action.setBadgeText({ tabId, text: 'ON' });
+  if (generation !== speechGeneration) return;
   chrome.tts.stop();
   const reportError = () => {
     if (generation !== speechGeneration) return;
@@ -92,6 +102,7 @@ async function speak(tabId: number, text: string) {
     text.slice(0, 800),
     {
       voiceName: voice.voiceName,
+      ...(voice.extensionId ? { extensionId: voice.extensionId } : {}),
       lang: voice.lang,
       rate: current.settings.rate,
       enqueue: false,
@@ -108,7 +119,10 @@ async function speak(tabId: number, text: string) {
 chrome.runtime.onMessage.addListener((message, sender, respond) => {
   if (sender.id !== chrome.runtime.id) return false;
   if (message?.type === 'STOP') {
-    stopSpeech();
+    // Content scripts already cancelled their timer. Popup/shortcut requests must
+    // also cancel the content timer, otherwise it can start speaking after Stop.
+    if (sender.tab) stopSpeech();
+    else void stopActiveReader().catch(() => {});
     respond({ ok: true });
     return false;
   }
@@ -132,7 +146,10 @@ chrome.runtime.onMessage.addListener((message, sender, respond) => {
       if (message.type === 'SET_SETTINGS') {
         const preferences = normaliseSettings(message.settings);
         await chrome.storage.local.set({ settings: preferences });
-        if ((await state(tab.id)).enabled) await setEnabled(tab.id, true, preferences);
+        if ((await state(tab.id)).enabled) {
+          stopSpeech();
+          await chrome.tabs.sendMessage(tab.id, { type: 'UPDATE_SETTINGS', settings: preferences });
+        }
       }
       if (message.type === 'REPEAT') await chrome.tabs.sendMessage(tab.id, { type: 'REPEAT' });
       respond(await state(tab.id));
@@ -147,7 +164,7 @@ chrome.runtime.onMessage.addListener((message, sender, respond) => {
 });
 
 chrome.commands.onCommand.addListener((command) => {
-  if (command === 'stop-reading') stopSpeech();
+  if (command === 'stop-reading') void stopActiveReader().catch(() => {});
 });
 chrome.tabs.onActivated.addListener(() => stopSpeech());
 chrome.tabs.onRemoved.addListener((tabId) => {

@@ -34,6 +34,14 @@ if (!scope.__pageVoiceInstalled) {
       reader?.repeat();
       respond({ ready: true });
     }
+    if (message?.type === 'UPDATE_SETTINGS') {
+      reader?.update(normaliseSettings(message.settings));
+      respond({ ready: true });
+    }
+    if (message?.type === 'STOP_READER') {
+      reader?.stop();
+      respond({ ready: true });
+    }
     return false;
   });
 }

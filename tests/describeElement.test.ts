@@ -79,4 +79,9 @@ describe('hover descriptions', () => {
       'A second sentence.',
     );
   });
+  it('does not read a paragraph when word mode cannot locate a word', () => {
+    const paragraph = element('<p>Hello there. A second sentence.</p>', 'p');
+    expect(describeAtPoint(paragraph, 0, 0, 'word')).toBe('');
+    expect(describeAtPoint(paragraph, 0, 0, 'sentence')).toBe('Hello there. A second sentence.');
+  });
 });

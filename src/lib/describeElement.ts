@@ -142,6 +142,8 @@ export function describeAtPoint(
     const segment = textSegment(node.textContent || '', offset, mode);
     if (segment) return segment;
   }
+  // Do not turn an empty word hit (such as whitespace) into an entire paragraph.
+  if (mode === 'word') return '';
   const block = target.closest('p,h1,h2,h3,h4,h5,h6,li,blockquote,figcaption,td,dt,dd,span');
   return block ? safeText(block) : '';
 }

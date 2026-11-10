@@ -1,5 +1,5 @@
 import type { ReaderSettings } from '../../shared/settings.js';
-import { describeAtPoint, describeFocused } from './describeElement.js';
+import { describeAtPoint, describeFocused, readingTarget } from './describeElement.js';
 
 export interface SpeechOutput {
   speak(text: string): void;
@@ -9,39 +9,78 @@ export interface SpeechOutput {
 export function createHoverReader(root: Document, output: SpeechOutput, initial: ReaderSettings) {
   let settings = initial;
   let pending: ReturnType<typeof setTimeout> | undefined;
+  let pendingKind: 'pointer' | 'focus' | undefined;
   let lastSpoken = '';
-  let suppressed = false;
+  let activeTarget: Element | null = null;
+  let activeDescription = '';
+  let disposed = false;
   const cancelPending = () => {
     clearTimeout(pending);
     pending = undefined;
+    pendingKind = undefined;
   };
-  const speak = (text: string) => {
-    if (!text || text === lastSpoken || suppressed) return;
+  const selectTarget = (element: Element) => {
+    const target = readingTarget(element);
+    if (activeTarget !== target) {
+      activeTarget = target;
+      activeDescription = '';
+    }
+    return target;
+  };
+  const speak = (target: Element, text: string) => {
+    if (
+      disposed ||
+      root.hidden ||
+      !root.documentElement.contains(target) ||
+      activeTarget !== target
+    )
+      return;
+    if (!text) {
+      activeDescription = '';
+      return;
+    }
+    if (text === activeDescription) return;
+    activeDescription = text;
     lastSpoken = text;
     output.speak(text);
   };
   const pointerMove = (event: PointerEvent) => {
-    if (!(event.target instanceof Element) || event.pointerType === 'touch') return;
+    if (disposed || !(event.target instanceof Element) || event.pointerType === 'touch') return;
     cancelPending();
-    suppressed = false;
-    const target = event.target;
+    const target = selectTarget(event.target);
     const x = event.clientX;
     const y = event.clientY;
-    pending = setTimeout(
-      () => speak(describeAtPoint(target, x, y, settings.textMode)),
-      settings.delay,
-    );
+    pendingKind = 'pointer';
+    pending = setTimeout(() => {
+      pending = undefined;
+      pendingKind = undefined;
+      speak(target, describeAtPoint(target, x, y, settings.textMode));
+    }, settings.delay);
   };
   const focusIn = (event: FocusEvent) => {
-    if (!settings.readOnFocus || !(event.target instanceof Element)) return;
+    if (disposed || !settings.readOnFocus || !(event.target instanceof Element)) return;
     cancelPending();
-    suppressed = false;
-    const target = event.target;
-    pending = setTimeout(() => speak(describeFocused(target)), 80);
+    const target = selectTarget(event.target);
+    pendingKind = 'focus';
+    pending = setTimeout(() => {
+      pending = undefined;
+      pendingKind = undefined;
+      speak(target, describeFocused(target));
+    }, 80);
+  };
+  const focusOut = (event: FocusEvent) => {
+    if (!settings.readOnFocus || !(event.target instanceof Element)) return;
+    if (pendingKind === 'focus') cancelPending();
+    if (activeTarget === readingTarget(event.target)) {
+      activeTarget = null;
+      activeDescription = '';
+    }
   };
   const stop = () => {
+    if (disposed) return;
     cancelPending();
-    suppressed = true;
+    activeTarget = null;
+    activeDescription = '';
     output.stop();
   };
   const keyDown = (event: KeyboardEvent) => {
@@ -52,23 +91,31 @@ export function createHoverReader(root: Document, output: SpeechOutput, initial:
   };
   root.addEventListener('pointermove', pointerMove, { passive: true });
   root.addEventListener('focusin', focusIn);
+  root.addEventListener('focusout', focusOut);
   root.addEventListener('keydown', keyDown);
   root.addEventListener('visibilitychange', visibility);
   root.documentElement.addEventListener('pointerleave', stop);
   return {
     stop,
     repeat: () => {
+      if (disposed || root.hidden) return;
       cancelPending();
       if (lastSpoken) output.speak(lastSpoken);
     },
     update: (next: ReaderSettings) => {
+      if (disposed) return;
       settings = next;
       cancelPending();
+      activeDescription = '';
     },
     dispose: () => {
+      if (disposed) return;
       stop();
+      disposed = true;
+      lastSpoken = '';
       root.removeEventListener('pointermove', pointerMove);
       root.removeEventListener('focusin', focusIn);
+      root.removeEventListener('focusout', focusOut);
       root.removeEventListener('keydown', keyDown);
       root.removeEventListener('visibilitychange', visibility);
       root.documentElement.removeEventListener('pointerleave', stop);

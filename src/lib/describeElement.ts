@@ -4,6 +4,14 @@ const excluded =
   'script,style,noscript,template,input,textarea,select,[contenteditable]:not([contenteditable="false"]),[hidden],[aria-hidden="true"],[inert],[data-pagevoice-ignore]';
 const clean = (text: string) => text.replace(/\s+/g, ' ').trim();
 
+// A button's icon/text and a field's label share one reading target.
+export function readingTarget(target: Element): Element {
+  const control = target.closest(controlSelector);
+  return control instanceof HTMLLabelElement && control.control
+    ? control.control
+    : (control ?? target);
+}
+
 export function isReadable(element: Element): boolean {
   if (
     element.closest(

@@ -32,7 +32,8 @@ export function isReadable(element: Element): boolean {
   return true;
 }
 
-// Never inspect .value, placeholders, password values or editable text.
+// Text extraction excludes field values, placeholders and editable content.
+// Native input-button captions are handled separately in accessibleName.
 export function safeText(element: Element): string {
   const walker = element.ownerDocument.createTreeWalker(element, NodeFilter.SHOW_TEXT);
   const parts: string[] = [];
@@ -61,13 +62,17 @@ function accessibleName(element: Element): string {
     element instanceof HTMLSelectElement ||
     element instanceof HTMLTextAreaElement
   ) {
-    return (
-      clean(
-        Array.from(element.labels || [])
-          .map(safeText)
-          .join(' '),
-      ).slice(0, 200) || 'Unlabelled'
-    );
+    const label = clean(
+      Array.from(element.labels || [])
+        .map(safeText)
+        .join(' '),
+    ).slice(0, 200);
+    if (label) return label;
+    // For these non-editable controls, value is the visible button caption.
+    // Never use value as a name fallback for text, password or other fields.
+    if (element instanceof HTMLInputElement && ['submit', 'button', 'reset'].includes(element.type))
+      return clean(element.value).slice(0, 200) || 'Unlabelled';
+    return 'Unlabelled';
   }
   return (
     safeText(element) ||

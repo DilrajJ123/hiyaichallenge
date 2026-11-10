@@ -43,6 +43,21 @@ describe('hover descriptions', () => {
     );
     expect(describeControl(field)).toBe('Your name. Text field. Required.');
   });
+  it.each(['submit', 'button', 'reset'])('reads a native %s input button caption', (type) => {
+    const button = element(`<input type="${type}" value="Find events">`, 'input');
+    expect(describeControl(button)).toBe('Find events. Button.');
+  });
+  it('prefers an explicit accessible label to an input button caption', () => {
+    const button = element(
+      '<input type="submit" value="Go" aria-label="Find events" disabled>',
+      'input',
+    );
+    expect(describeControl(button)).toBe('Find events. Button. Disabled.');
+  });
+  it('does not use an entered field value as a missing-label fallback', () => {
+    const field = element('<input type="text" value="Private entered value">', 'input');
+    expect(describeControl(field)).toBe('Unlabelled. Text field.');
+  });
   it('never reads password contents', () => {
     const field = element(
       '<label for="password">Password</label><input id="password" type="password" value="private123">',

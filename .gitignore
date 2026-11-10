@@ -1,0 +1,9 @@
+node_modules/
+dist/
+dist-extension/
+.env*
+.DS_Store
+coverage/
+test-results/
+*.log
+*.zip

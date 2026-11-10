@@ -146,10 +146,20 @@ chrome.runtime.onMessage.addListener((message, sender, respond) => {
       if (message.type === 'SET_SETTINGS') {
         const preferences = normaliseSettings(message.settings);
         await chrome.storage.local.set({ settings: preferences });
-        if ((await state(tab.id)).enabled) {
-          stopSpeech();
-          await chrome.tabs.sendMessage(tab.id, { type: 'UPDATE_SETTINGS', settings: preferences });
-        }
+        stopSpeech();
+        const session = await chrome.storage.session.get(null);
+        const enabledTabs = Object.entries(session)
+          .filter(([key, value]) => /^enabled:\d+$/.test(key) && value === true)
+          .map(([key]) => Number(key.slice('enabled:'.length)));
+        // Preferences are global: existing readers in other enabled tabs must
+        // agree with what the popup shows when the user returns to those tabs.
+        await Promise.all(
+          enabledTabs.map((id) =>
+            chrome.tabs
+              .sendMessage(id, { type: 'UPDATE_SETTINGS', settings: preferences })
+              .catch(() => {}),
+          ),
+        );
       }
       if (message.type === 'REPEAT') await chrome.tabs.sendMessage(tab.id, { type: 'REPEAT' });
       respond(await state(tab.id));

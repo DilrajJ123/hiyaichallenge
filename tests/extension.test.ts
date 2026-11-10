@@ -140,4 +140,30 @@ describe('Chrome speech adapter (simulated Chrome APIs)', () => {
     });
     expect(chrome.scripting.executeScript).not.toHaveBeenCalled();
   });
+  it('keeps previously enabled tabs in sync with global reading preferences', async () => {
+    session['enabled:2'] = true;
+    session['enabled:3'] = false;
+    await new Promise((resolve) => {
+      listener(
+        { type: 'SET_SETTINGS', settings: { textMode: 'word' } },
+        { id: 'test-extension' },
+        resolve,
+      );
+    });
+    expect(chrome.tabs.sendMessage).toHaveBeenCalledWith(
+      1,
+      expect.objectContaining({
+        type: 'UPDATE_SETTINGS',
+        settings: expect.objectContaining({ textMode: 'word' }),
+      }),
+    );
+    expect(chrome.tabs.sendMessage).toHaveBeenCalledWith(
+      2,
+      expect.objectContaining({
+        type: 'UPDATE_SETTINGS',
+        settings: expect.objectContaining({ textMode: 'word' }),
+      }),
+    );
+    expect(chrome.tabs.sendMessage).toHaveBeenCalledTimes(2);
+  });
 });

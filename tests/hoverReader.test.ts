@@ -14,6 +14,7 @@ afterEach(() => {
   reader.dispose();
   document.body.innerHTML = '';
   vi.useRealTimers();
+  vi.restoreAllMocks();
   vi.clearAllMocks();
 });
 const hoverElement = (target: Element) =>
@@ -77,6 +78,55 @@ describe('hover reader behaviour', () => {
     document.querySelector('button')!.focus();
     vi.advanceTimersByTime(80);
     expect(output.speak).toHaveBeenCalledWith('First. Button.');
+  });
+  it('reads controls inserted after the reader was enabled', () => {
+    const button = document.createElement('button');
+    button.textContent = 'New content';
+    document.body.append(button);
+    hoverElement(button);
+    vi.advanceTimersByTime(350);
+    expect(output.speak).toHaveBeenCalledWith('New content. Button.');
+  });
+  it('keeps hover reading available when keyboard announcements are disabled', () => {
+    reader.update({ ...defaultSettings, readOnFocus: false });
+    document.querySelector('button')!.focus();
+    vi.advanceTimersByTime(500);
+    expect(output.speak).not.toHaveBeenCalled();
+    hover(0);
+    vi.advanceTimersByTime(350);
+    expect(output.speak).toHaveBeenCalledWith('First. Button.');
+  });
+  it('stops when the pointer leaves and waits for a new hover before restarting', () => {
+    hover(0);
+    vi.advanceTimersByTime(350);
+    output.speak.mockClear();
+    hover(1);
+    document.documentElement.dispatchEvent(new MouseEvent('pointerleave'));
+    vi.advanceTimersByTime(1000);
+    expect(output.stop).toHaveBeenCalledOnce();
+    expect(output.speak).not.toHaveBeenCalled();
+    hover(1);
+    vi.advanceTimersByTime(350);
+    expect(output.speak).toHaveBeenCalledWith('Second. Button.');
+  });
+  it('stops and cancels pending reading while hidden without resuming on return', () => {
+    hover(0);
+    vi.advanceTimersByTime(350);
+    output.speak.mockClear();
+    hover(1);
+    const hidden = vi.spyOn(document, 'hidden', 'get').mockReturnValue(true);
+    document.dispatchEvent(new Event('visibilitychange'));
+    vi.advanceTimersByTime(1000);
+    reader.repeat();
+    expect(output.stop).toHaveBeenCalledOnce();
+    expect(output.speak).not.toHaveBeenCalled();
+    hidden.mockReturnValue(false);
+    document.dispatchEvent(new Event('visibilitychange'));
+    vi.advanceTimersByTime(1000);
+    expect(output.speak).not.toHaveBeenCalled();
+    hover(1);
+    vi.advanceTimersByTime(350);
+    expect(output.speak).toHaveBeenCalledWith('Second. Button.');
   });
   it('cancels pending speech on Escape', () => {
     hover(0);

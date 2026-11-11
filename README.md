@@ -40,7 +40,7 @@ To test the installed extension on this sample, leave the preview's own reader *
 - **Reading preferences:** expand this section in the extension popup to change speed, text mode, hover delay or keyboard announcements. Preferences apply across enabled tabs; Repeat uses the current speed.
 - **Alt+Shift+Y:** open the extension popup. **Alt+Shift+S:** stop extension speech. Shortcut availability depends on browser/OS conflicts; inspect Chrome's Extensions keyboard shortcuts page if needed.
 
-The preview briefly waits for local voices to finish loading. If no local voice is found, PageVoice displays an error rather than selecting a remote voice. Install a local English speech voice in your operating system and retry. The build has been loaded and exercised in Chrome, and audible button playback through Repeat has been confirmed. Further listening and accessibility checks remain outstanding.
+The preview briefly waits for local voices to finish loading. If no local voice is found, PageVoice displays an error rather than selecting a remote voice. Install a local English speech voice in your operating system and retry. The build has been loaded and exercised in Chrome. Audible button playback through Repeat and hovered sentence/word playback have been confirmed. Further listening and accessibility checks remain outstanding.
 
 ## Project layout
 

@@ -26,6 +26,10 @@ export function ReaderControls({
   onStop,
   onRepeat,
 }: ReaderControlsProps) {
+  // Native disabling during a save drops keyboard focus; guard actions instead.
+  const changeSettings = (next: ReaderSettings) => {
+    if (!busy) onSettings(next);
+  };
   const preferences = (
     <>
       <div className="settings-grid">
@@ -34,8 +38,8 @@ export function ReaderControls({
           <select
             id="reading-speed"
             value={settings.rate}
-            disabled={busy}
-            onChange={(event) => onSettings({ ...settings, rate: Number(event.target.value) })}
+            aria-disabled={busy}
+            onChange={(event) => changeSettings({ ...settings, rate: Number(event.target.value) })}
           >
             <option value="0.8">Slower · 0.8×</option>
             <option value="1">Normal · 1×</option>
@@ -48,9 +52,9 @@ export function ReaderControls({
           <select
             id="text-mode"
             value={settings.textMode}
-            disabled={busy}
+            aria-disabled={busy}
             onChange={(event) =>
-              onSettings({
+              changeSettings({
                 ...settings,
                 textMode: event.target.value as ReaderSettings['textMode'],
               })
@@ -65,8 +69,8 @@ export function ReaderControls({
           <select
             id="hover-delay"
             value={settings.delay}
-            disabled={busy}
-            onChange={(event) => onSettings({ ...settings, delay: Number(event.target.value) })}
+            aria-disabled={busy}
+            onChange={(event) => changeSettings({ ...settings, delay: Number(event.target.value) })}
           >
             <option value="200">Quick · 0.2 seconds</option>
             <option value="350">Balanced · 0.35 seconds</option>
@@ -78,8 +82,8 @@ export function ReaderControls({
         <input
           type="checkbox"
           checked={settings.readOnFocus}
-          disabled={busy}
-          onChange={(event) => onSettings({ ...settings, readOnFocus: event.target.checked })}
+          aria-disabled={busy}
+          onChange={(event) => changeSettings({ ...settings, readOnFocus: event.target.checked })}
         />
         Also read keyboard focus
       </label>
@@ -103,8 +107,11 @@ export function ReaderControls({
         className={`enable-button ${enabled ? 'is-enabled' : ''}`}
         type="button"
         aria-pressed={enabled}
-        onClick={onToggle}
-        disabled={busy || !available}
+        aria-disabled={busy || !available}
+        onClick={() => {
+          if (!busy) onToggle();
+        }}
+        disabled={!available}
       >
         <Power size={19} aria-hidden="true" />
         {busy ? 'Please wait…' : enabled ? 'Turn off reading' : 'Turn on reading'}
@@ -136,7 +143,14 @@ export function ReaderControls({
           <Square size={15} aria-hidden="true" />
           Stop <kbd>Esc</kbd>
         </button>
-        <button type="button" onClick={onRepeat} disabled={!enabled}>
+        <button
+          type="button"
+          aria-disabled={busy || !enabled}
+          onClick={() => {
+            if (!busy) onRepeat();
+          }}
+          disabled={!enabled}
+        >
           <RotateCcw size={16} aria-hidden="true" />
           Repeat last
         </button>

@@ -10,7 +10,7 @@ The applicant selected the accessibility track and the interaction: hover over w
 
 PageVoice uses browser/operating-system text-to-speech through Chrome's `tts` API. The web preview uses `speechSynthesis`. Only voices marked as local are selected. PageVoice does not train a model or implement a language-model agent, and it does not use speech recognition.
 
-The Hiya brief asks for a voice AI agent. This prototype currently demonstrates an assistive speech interaction; whether that meets the intended agent requirement should be checked with the organisers. It should not be described as a generative AI system.
+The Hiya brief asks for a voice AI agent. The current TTS-only scope was described to the organisers, who said on 11 November 2026 that it could be submitted for the team's review. This is an assistive speech interaction and should not be described as a generative AI system.
 
 ## Review and responsibility
 
